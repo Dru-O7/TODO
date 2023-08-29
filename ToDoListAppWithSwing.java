@@ -1,105 +1,93 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ToDoListAppWithSwing extends JFrame {
     private DefaultListModel<String> taskListModel;
     private JList<String> taskList;
     private JTextField taskTextField;
     private JButton addButton;
-    private JToggleButton darkModeToggle;
+    private JButton removeButton;
+    private JButton prioritizeButton;
+    private int taskCounter = 1;
 
     public ToDoListAppWithSwing() {
-        setTitle("To-Do List");
+        setTitle("ToDo");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
         taskListModel = new DefaultListModel<>();
         taskList = new JList<>(taskListModel);
-        taskList.setFont(new Font("Arial", Font.PLAIN, 16));
-        taskList.setCellRenderer(new TaskCellRenderer());
-
         JScrollPane scrollPane = new JScrollPane(taskList);
 
         taskTextField = new JTextField(20);
         addButton = new JButton("Add Task");
-        darkModeToggle = new JToggleButton("Dark Mode");
+        removeButton = new JButton("Remove Task");
+        prioritizeButton = new JButton("Prioritize Task");
 
-        addButton.addActionListener(e -> {
-            String task = taskTextField.getText();
-            if (!task.isEmpty()) {
-                taskListModel.addElement(task);
-                taskTextField.setText("");
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String task = taskTextField.getText();
+                if (!task.isEmpty()) {
+                    taskListModel.addElement(taskCounter + ". " + task);
+                    taskTextField.setText("");
+                    taskCounter++;
+                }
             }
         });
 
-        darkModeToggle.addActionListener(e -> {
-            if (darkModeToggle.isSelected()) {
-                getContentPane().setBackground(Color.DARK_GRAY);
-                taskList.setForeground(Color.WHITE);
-            } else {
-                getContentPane().setBackground(Color.WHITE);
-                taskList.setForeground(Color.BLACK);
+        removeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = taskList.getSelectedIndex();
+                if (selectedIndex != -1) {
+                    taskListModel.remove(selectedIndex);
+                    // Update task indexes
+                    updateTaskIndexes();
+                }
+            }
+        });
+
+        prioritizeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = taskList.getSelectedIndex();
+                if (selectedIndex != -1) {
+                    String task = taskListModel.remove(selectedIndex);
+                    taskListModel.add(0, task);
+                    // Update task indexes
+                    updateTaskIndexes();
+                }
             }
         });
 
         JPanel inputPanel = new JPanel();
-        inputPanel.setBackground(Color.WHITE);
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        inputPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         inputPanel.add(taskTextField);
         inputPanel.add(addButton);
-        inputPanel.add(darkModeToggle);
+        inputPanel.add(removeButton);
+        inputPanel.add(prioritizeButton);
 
         add(scrollPane, BorderLayout.CENTER);
         add(inputPanel, BorderLayout.SOUTH);
 
-        pack();
+        setSize(400, 300);
         setLocationRelativeTo(null);
         setVisible(true);
     }
 
-    private class TaskCellRenderer extends JPanel implements ListCellRenderer<String> {
-        private JButton removeButton;
-        private JButton prioritizeButton;
-        private JLabel taskLabel;
-
-        public TaskCellRenderer() {
-            setLayout(new BorderLayout());
-            setOpaque(true);
-
-            removeButton = new JButton("Remove");
-            prioritizeButton = new JButton("Prioritize");
-            taskLabel = new JLabel();
-
-            JPanel buttonPanel = new JPanel();
-            buttonPanel.add(removeButton);
-            buttonPanel.add(prioritizeButton);
-
-            add(taskLabel, BorderLayout.CENTER);
-            add(buttonPanel, BorderLayout.EAST);
-
-            removeButton.addActionListener(e -> {
-                String task = taskLabel.getText();
-                taskListModel.removeElement(task);
-            });
-
-            prioritizeButton.addActionListener(e -> {
-                String task = taskLabel.getText();
-                taskListModel.removeElement(task);
-                taskListModel.add(0, task);
-            });
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList<? extends String> list, String value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
-            taskLabel.setText(value);
-            return this;
+    private void updateTaskIndexes() {
+        taskCounter = 1;
+        for (int i = 0; i < taskListModel.size(); i++) {
+            String task = taskListModel.getElementAt(i);
+            taskListModel.setElementAt(taskCounter + ". " + task.substring(3), i);
+            taskCounter++;
         }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new ToDoListAppWithSwing());
+
     }
 }
